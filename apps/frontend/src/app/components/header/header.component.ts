@@ -5,7 +5,6 @@ import { BlogService } from '../../services/blog.service';
 
 @Component({
   selector: 'app-header',
-  standalone: true,
   imports: [RouterModule],
   template: `
     <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">

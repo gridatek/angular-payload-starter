@@ -7,7 +7,6 @@ import { Post } from 'types';
 
 @Component({
   selector: 'app-post-detail',
-  standalone: true,
   imports: [RouterModule],
   template: `
     <!-- Loading State -->
