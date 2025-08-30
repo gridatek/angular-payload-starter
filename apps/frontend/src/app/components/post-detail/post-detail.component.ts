@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -283,18 +283,16 @@ import { Post } from 'types';
   `]
 })
 export class PostDetailComponent implements OnInit, OnDestroy {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private blogService = inject(BlogService);
+
   post: Post | null = null;
   isLoading = false;
   error: string | null = null;
   readingTime: number | null = null;
   showCopyToast = false;
   private destroy$ = new Subject<void>();
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private blogService: BlogService
-  ) {}
 
   ngOnInit(): void {
     this.route.paramMap

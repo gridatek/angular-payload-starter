@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Post, PayloadResponse } from 'types';
@@ -7,9 +7,9 @@ import { Post, PayloadResponse } from 'types';
   providedIn: 'root',
 })
 export class BlogService {
-  private readonly apiUrl = 'http://localhost:3000/api';
+  private readonly http = inject(HttpClient);
 
-  constructor(private readonly http: HttpClient) {}
+  private readonly apiUrl = 'http://localhost:3000/api';
 
   getPosts(page: number = 1, limit: number = 10): Observable<PayloadResponse<Post>> {
     const params = new HttpParams()

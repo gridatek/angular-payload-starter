@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 import { BlogService } from '../../services/blog.service';
@@ -234,12 +234,12 @@ import { Post, PayloadResponse } from 'types';
   ],
 })
 export class PostListComponent implements OnInit {
+  private readonly blogService = inject(BlogService);
+
   posts: Post[] = [];
   paginationData: any = null;
   isLoading = signal(false);
   error: string | null = null;
-
-  constructor(private readonly blogService: BlogService) {}
 
   ngOnInit(): void {
     this.loadPosts();

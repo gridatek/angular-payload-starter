@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 import { BlogService } from '../../services/blog.service';
@@ -97,10 +97,10 @@ import { BlogService } from '../../services/blog.service';
   `
 })
 export class HeaderComponent implements OnInit {
+  private blogService = inject(BlogService);
+
   siteSettings: any = null;
   isMobileMenuOpen = false;
-
-  constructor(private blogService: BlogService) {}
 
   ngOnInit(): void {
     this.loadSiteSettings();

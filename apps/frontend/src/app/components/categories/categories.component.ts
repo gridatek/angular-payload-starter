@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 import {BlogService} from '../../services/blog.service';
@@ -96,11 +96,11 @@ import {BlogService} from '../../services/blog.service';
     `
 })
 export class CategoriesComponent implements OnInit {
+  private blogService = inject(BlogService);
+
   categories: any[] = [];
   isLoading = false;
   error: string | null = null;
-
-  constructor(private blogService: BlogService) {}
 
   ngOnInit(): void {
     this.loadCategories();
