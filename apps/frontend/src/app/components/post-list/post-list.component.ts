@@ -1,7 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { BlogService, Post, PayloadResponse } from '../../services/blog.service';
+import { BlogService } from '../../services/blog.service';
+import { Post, PayloadResponse } from 'types';
 
 @Component({
   selector: 'app-post-list',
@@ -259,7 +260,7 @@ export class PostListComponent implements OnInit {
   }
 
   trackByPostId(index: number, post: Post): string {
-    return post.id;
+    return `${post.id}`;
   }
 
   formatDate(dateString: string): string {
