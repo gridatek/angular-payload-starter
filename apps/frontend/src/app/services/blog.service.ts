@@ -32,9 +32,9 @@ export interface PayloadResponse<T> {
   providedIn: 'root'
 })
 export class BlogService {
-  private apiUrl = 'http://localhost:3000/api';
+  private readonly apiUrl = 'http://localhost:3000/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   getPosts(page: number = 1, limit: number = 10): Observable<PayloadResponse<Post>> {
     const params = new HttpParams()
