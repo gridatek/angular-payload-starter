@@ -1,8 +1,8 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, computed, inject, signal, Signal } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
+import { Post } from 'types';
 import { BlogService } from '../../services/blog.service';
-import { Post, PayloadResponse } from 'types';
 
 @Component({
   selector: 'app-post-list',
@@ -25,7 +25,7 @@ import { Post, PayloadResponse } from 'types';
       }
     
       <!-- Error State -->
-      @if (error) {
+      @if (error()) {
         <div class="text-center py-12">
           <div class="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
             <svg
@@ -42,7 +42,7 @@ import { Post, PayloadResponse } from 'types';
               ></path>
             </svg>
             <h3 class="text-lg font-medium text-red-800 mb-2">Error Loading Posts</h3>
-            <p class="text-red-600 mb-4">{{ error }}</p>
+            <p class="text-red-600 mb-4">{{ error() }}</p>
             <button
               (click)="loadPosts()"
               class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -71,15 +71,15 @@ import { Post, PayloadResponse } from 'types';
                     </span>
                     <h2 class="text-2xl md:text-3xl font-bold mb-4 leading-tight">
                       <a
-                        [routerLink]="['/post', posts[0].slug]"
+                        [routerLink]="['/post', posts()[0].slug]"
                         class="hover:text-blue-100 transition-colors"
                         >
-                        {{ posts[0].title }}
+                        {{ posts()[0].title }}
                       </a>
                     </h2>
-                    @if (posts[0].excerpt) {
+                    @if (posts()[0].excerpt) {
                       <p class="text-blue-100 mb-6 text-lg">
-                        {{ posts[0].excerpt }}
+                        {{ posts()[0].excerpt }}
                       </p>
                     }
                     <div class="flex items-center text-blue-100">
@@ -88,7 +88,7 @@ import { Post, PayloadResponse } from 'types';
                           d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM6 7a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zM6 11a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z"
                         ></path>
                       </svg>
-                      <time>{{ formatDate(posts[0].publishedDate || posts[0].createdAt) }}</time>
+                      <time>{{ formatDate(posts()[0].publishedDate || posts()[0].createdAt) }}</time>
                     </div>
                   </div>
                 </div>
@@ -97,10 +97,10 @@ import { Post, PayloadResponse } from 'types';
                     <div class="w-full">
                       <div
                         class="prose prose-gray max-w-none"
-                        [innerHTML]="getExcerptHtml(posts[0])"
+                        [innerHTML]="getExcerptHtml(posts()[0])"
                       ></div>
                       <a
-                        [routerLink]="['/post', posts[0].slug]"
+                        [routerLink]="['/post', posts()[0].slug]"
                         class="inline-flex items-center mt-4 text-blue-600 hover:text-blue-800 font-medium transition-colors"
                         >
                         Read More
@@ -120,9 +120,9 @@ import { Post, PayloadResponse } from 'types';
             </article>
           }
           <!-- Regular Posts Grid -->
-          @if (posts.length > 1) {
+          @if (posts().length > 1) {
             <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              @for (post of posts.slice(1); track trackByPostId($index, post)) {
+              @for (post of posts().slice(1); track post.id) {
                 <article
                   class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden"
                   >
@@ -188,14 +188,14 @@ import { Post, PayloadResponse } from 'types';
             </div>
           }
           <!-- Pagination -->
-          @if (paginationData && paginationData.totalPages > 1) {
+          @if (paginationData() && paginationData().totalPages! > 1) {
             <div
               class="flex justify-center mt-12"
               >
               <nav class="flex items-center space-x-1">
-                @if (paginationData.hasPrevPage) {
+                @if (paginationData().hasPrevPage) {
                   <button
-                    (click)="loadPosts(paginationData.prevPage!)"
+                    (click)="page.set(paginationData().prevPage!)"
                     class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
                     >
                     Previous
@@ -204,11 +204,11 @@ import { Post, PayloadResponse } from 'types';
                 <span
                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-blue-50 border border-blue-200"
                   >
-                  Page {{ paginationData.page }} of {{ paginationData.totalPages }}
+                  Page {{ paginationData().page }} of {{ paginationData().totalPages }}
                 </span>
-                @if (paginationData.hasNextPage) {
+                @if (paginationData().hasNextPage) {
                   <button
-                    (click)="loadPosts(paginationData.nextPage!)"
+                    (click)="page.set(paginationData().nextPage!)"
                     class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
                     >
                     Next
@@ -232,46 +232,72 @@ import { Post, PayloadResponse } from 'types';
     `,
   ],
 })
-export class PostListComponent implements OnInit {
+export class PostListComponent {
   private readonly blogService = inject(BlogService);
 
-  posts: Post[] = [];
-  paginationData: any = null;
-  isLoading = signal(false);
-  error: string | null = null;
+  protected readonly page = signal(1);
 
-  ngOnInit(): void {
-    this.loadPosts();
+  private readonly postsResource = this.blogService.createPostsResource(this.page(), 9);
+
+  protected readonly posts: Signal<Post[]> = computed(() => this.postsResource.value()?.docs ?? []);
+
+
+  protected readonly paginationData = computed(() => {
+
+
+    return {
+      page: this.postsResource.value()?.page,
+      totalPages: this.postsResource.value()?.totalPages,
+      hasNextPage: this.postsResource.value()?.hasNextPage,
+      hasPrevPage: this.postsResource.value()?.hasPrevPage,
+      nextPage: this.postsResource.value()?.nextPage,
+      prevPage: this.postsResource.value()?.prevPage,
+    };
+
+
+  });
+
+
+  protected readonly isLoading = computed(() => this.postsResource.isLoading());
+  protected readonly error = computed(() => this.postsResource.error());
+
+
+  protected loadPosts() {
+
   }
 
-  loadPosts(page: number = 1): void {
-    this.isLoading.set(true);
-    this.error = null;
+  // ngOnInit(): void {
+  //   this.loadPosts();
+  // }
 
-    this.blogService.getPosts(page, 9).subscribe({
-      next: (response: PayloadResponse<Post>) => {
-        this.posts = response.docs;
-        this.paginationData = {
-          page: response.page,
-          totalPages: response.totalPages,
-          hasNextPage: response.hasNextPage,
-          hasPrevPage: response.hasPrevPage,
-          nextPage: response.nextPage,
-          prevPage: response.prevPage,
-        };
-        this.isLoading.set(false);
-      },
-      error: (error) => {
-        this.error = 'Failed to load posts. Please try again.';
-        this.isLoading.set(false);
-        console.error('Error loading posts:', error);
-      },
-    });
-  }
+  // loadPosts(page: number = 1): void {
+  //   this.isLoading.set(true);
+  //   this.error = null;
 
-  trackByPostId(index: number, post: Post): string {
-    return `${post.id}`;
-  }
+  //   this.blogService.getPosts(page, 9).subscribe({
+  //     next: (response: PayloadResponse<Post>) => {
+  //       this.posts = response.docs;
+  //       this.paginationData = {
+  //         page: response.page,
+  //         totalPages: response.totalPages,
+  //         hasNextPage: response.hasNextPage,
+  //         hasPrevPage: response.hasPrevPage,
+  //         nextPage: response.nextPage,
+  //         prevPage: response.prevPage,
+  //       };
+  //       this.isLoading.set(false);
+  //     },
+  //     error: (error) => {
+  //       this.error = 'Failed to load posts. Please try again.';
+  //       this.isLoading.set(false);
+  //       console.error('Error loading posts:', error);
+  //     },
+  //   });
+  // }
+
+  // trackByPostId(index: number, post: Post): string {
+  //   return `${post.id}`;
+  // }
 
   formatDate(dateString: string): string {
     const date = new Date(dateString);
