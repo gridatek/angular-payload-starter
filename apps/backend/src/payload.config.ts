@@ -24,6 +24,126 @@ export default buildConfig({
     },
   },
   collections: [Users, Categories, Posts, Media],
+
+  globals: [
+    {
+      slug: 'settings',
+      admin: {
+        group: 'Configuration',
+      },
+      fields: [
+        {
+          type: 'tabs',
+          tabs: [
+            {
+              label: 'General',
+              fields: [
+                {
+                  name: 'siteName',
+                  type: 'text',
+                  required: true,
+                  defaultValue: 'My Blog',
+                },
+                {
+                  name: 'siteDescription',
+                  type: 'textarea',
+                  admin: {
+                    description: 'This will be used for SEO meta descriptions',
+                  },
+                },
+                {
+                  name: 'siteUrl',
+                  type: 'text',
+                  admin: {
+                    description: 'Your site URL (used for sitemaps and SEO)',
+                  },
+                },
+                {
+                  name: 'logo',
+                  type: 'upload',
+                  relationTo: 'media',
+                },
+                {
+                  name: 'favicon',
+                  type: 'upload',
+                  relationTo: 'media',
+                },
+              ],
+            },
+            {
+              label: 'Social',
+              fields: [
+                {
+                  name: 'social',
+                  type: 'group',
+                  fields: [
+                    {
+                      name: 'twitter',
+                      type: 'text',
+                    },
+                    {
+                      name: 'facebook',
+                      type: 'text',
+                    },
+                    {
+                      name: 'instagram',
+                      type: 'text',
+                    },
+                    {
+                      name: 'linkedin',
+                      type: 'text',
+                    },
+                    {
+                      name: 'youtube',
+                      type: 'text',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              label: 'SEO',
+              fields: [
+                {
+                  name: 'seo',
+                  type: 'group',
+                  fields: [
+                    {
+                      name: 'defaultTitle',
+                      type: 'text',
+                      admin: {
+                        description: 'Default title suffix for all pages',
+                      },
+                    },
+                    {
+                      name: 'defaultDescription',
+                      type: 'textarea',
+                      admin: {
+                        description: 'Default meta description',
+                      },
+                    },
+                    {
+                      name: 'defaultImage',
+                      type: 'upload',
+                      relationTo: 'media',
+                      admin: {
+                        description: 'Default social sharing image',
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      access: {
+        read: () => true,
+        update: ({ req: { user } }) => Boolean(user),
+      },
+    },
+  ],
+
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
