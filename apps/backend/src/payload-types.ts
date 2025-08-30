@@ -267,21 +267,7 @@ export interface Post {
    * A short description of the post for previews and SEO
    */
   excerpt?: string | null;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
+  content: string;
   featuredImage?: (number | null) | Media;
   categories?: (number | Category)[] | null;
   tags?:
