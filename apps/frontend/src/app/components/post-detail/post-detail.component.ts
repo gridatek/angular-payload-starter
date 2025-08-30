@@ -42,7 +42,7 @@ import { Post } from 'types';
     @if (post && !isLoading && !error) {
       <article class="min-h-screen">
         <!-- Hero Section -->
-        <header class="bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 text-white py-16 lg:py-24">
+        <header class="bg-linear-to-r from-gray-900 via-blue-900 to-gray-900 text-white py-16 lg:py-24">
           <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center">
               <!-- Breadcrumb -->

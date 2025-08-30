@@ -62,7 +62,7 @@ import { Post, PayloadResponse } from 'types';
               class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
               >
               <div class="md:flex">
-                <div class="md:w-1/2 bg-gradient-to-br from-blue-500 to-purple-600 p-8 text-white">
+                <div class="md:w-1/2 bg-linear-to-br from-blue-500 to-purple-600 p-8 text-white">
                   <div class="h-full flex flex-col justify-center">
                     <span
                       class="inline-block bg-white bg-opacity-20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4"
