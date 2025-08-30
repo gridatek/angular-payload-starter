@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { BlogService, Post } from '../../services/blog.service';
+import { BlogService } from '../../services/blog.service';
+import { Post } from 'types';
 
 @Component({
   selector: 'app-post-detail',
@@ -375,9 +376,9 @@ export class PostDetailComponent implements OnInit, OnDestroy {
     }
 
     // Handle Lexical editor format
-    if (this.post.content.root && this.post.content.root.children) {
-      return this.convertLexicalToHtml(this.post.content.root.children);
-    }
+    // if (this.post.content.root && this.post.content.root.children) {
+    //   return this.convertLexicalToHtml(this.post.content.root.children);
+    // }
 
     return '<p class="text-gray-500 italic">Unable to display content.</p>';
   }
