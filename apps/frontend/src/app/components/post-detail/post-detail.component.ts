@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { BlogService } from '../../services/blog.service';
@@ -8,167 +8,167 @@ import { Post } from 'types';
 @Component({
   selector: 'app-post-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   template: `
     <!-- Loading State -->
-    <div *ngIf="isLoading" class="min-h-screen flex items-center justify-center">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Loading post...</p>
+    @if (isLoading) {
+      <div class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p class="text-gray-600">Loading post...</p>
+        </div>
       </div>
-    </div>
-
+    }
+    
     <!-- Error State -->
-    <div *ngIf="error" class="min-h-screen flex items-center justify-center">
-      <div class="text-center max-w-md mx-auto px-4">
-        <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h2>
-        <p class="text-gray-600 mb-6">{{ error }}</p>
-        <a routerLink="/" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+    @if (error) {
+      <div class="min-h-screen flex items-center justify-center">
+        <div class="text-center max-w-md mx-auto px-4">
+          <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          Back to Home
-        </a>
-      </div>
-    </div>
-
-    <!-- Post Content -->
-    <article *ngIf="post && !isLoading && !error" class="min-h-screen">
-      <!-- Hero Section -->
-      <header class="bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 text-white py-16 lg:py-24">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="text-center">
-            <!-- Breadcrumb -->
-            <nav class="mb-8">
-              <ol class="flex items-center justify-center space-x-2 text-sm">
-                <li>
-                  <a routerLink="/" class="text-gray-300 hover:text-white transition-colors">Home</a>
-                </li>
-                <li class="text-gray-500">/</li>
-                <li class="text-gray-100">{{ post.title }}</li>
-              </ol>
-            </nav>
-
-            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6">
-              {{ post.title }}
-            </h1>
-
-            <div class="flex items-center justify-center space-x-6 text-gray-300 mb-8">
-              <div class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM6 7a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zM6 11a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z"></path>
-                </svg>
-                <time>{{ formatDate(post.publishedDate || post.createdAt) }}</time>
-              </div>
-
-              <div class="flex items-center" *ngIf="readingTime">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span>{{ readingTime }} min read</span>
-              </div>
-
-              <div class="flex items-center">
-                <span class="px-3 py-1 bg-blue-600 bg-opacity-20 text-blue-200 text-sm font-medium rounded-full">
-                  {{ post.status === 'published' ? 'Published' : 'Draft' }}
-                </span>
-              </div>
-            </div>
-
-            <p class="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto" *ngIf="post.excerpt">
-              {{ post.excerpt }}
-            </p>
-          </div>
-        </div>
-      </header>
-
-      <!-- Article Content -->
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div class="px-6 sm:px-10 lg:px-12 py-8 sm:py-12">
-            <!-- Content -->
-            <div class="prose prose-lg prose-blue max-w-none"
-                 [innerHTML]="getContentHtml()">
-            </div>
-
-            <!-- Article Footer -->
-            <footer class="mt-12 pt-8 border-t border-gray-200">
-              <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-500">
-                  Last updated: {{ formatDate(post.updatedAt) }}
-                </div>
-
-                <!-- Share Buttons -->
-                <div class="flex items-center space-x-3">
-                  <span class="text-sm text-gray-500 mr-3">Share:</span>
-                  <button
-                    (click)="shareOnTwitter()"
-                    class="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Share on Twitter">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                    </svg>
-                  </button>
-
-                  <button
-                    (click)="shareOnLinkedIn()"
-                    class="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Share on LinkedIn">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                    </svg>
-                  </button>
-
-                  <button
-                    (click)="copyUrl()"
-                    class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                    title="Copy URL">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </footer>
-          </div>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="mt-12 flex justify-between">
-          <a routerLink="/"
-             class="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-medium rounded-lg shadow-md hover:shadow-lg hover:bg-gray-50 transition-all">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h2>
+          <p class="text-gray-600 mb-6">{{ error }}</p>
+          <a routerLink="/" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
-            Back to Posts
+            Back to Home
           </a>
-
-          <button
-            (click)="scrollToTop()"
-            class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg hover:bg-blue-700 transition-all">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
-            </svg>
-            Back to Top
-          </button>
-        </nav>
+        </div>
       </div>
-    </article>
-
+    }
+    
+    <!-- Post Content -->
+    @if (post && !isLoading && !error) {
+      <article class="min-h-screen">
+        <!-- Hero Section -->
+        <header class="bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 text-white py-16 lg:py-24">
+          <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+              <!-- Breadcrumb -->
+              <nav class="mb-8">
+                <ol class="flex items-center justify-center space-x-2 text-sm">
+                  <li>
+                    <a routerLink="/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+                  </li>
+                  <li class="text-gray-500">/</li>
+                  <li class="text-gray-100">{{ post.title }}</li>
+                </ol>
+              </nav>
+              <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6">
+                {{ post.title }}
+              </h1>
+              <div class="flex items-center justify-center space-x-6 text-gray-300 mb-8">
+                <div class="flex items-center">
+                  <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM6 7a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zM6 11a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z"></path>
+                  </svg>
+                  <time>{{ formatDate(post.publishedDate || post.createdAt) }}</time>
+                </div>
+                @if (readingTime) {
+                  <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>{{ readingTime }} min read</span>
+                  </div>
+                }
+                <div class="flex items-center">
+                  <span class="px-3 py-1 bg-blue-600 bg-opacity-20 text-blue-200 text-sm font-medium rounded-full">
+                    {{ post.status === 'published' ? 'Published' : 'Draft' }}
+                  </span>
+                </div>
+              </div>
+              @if (post.excerpt) {
+                <p class="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
+                  {{ post.excerpt }}
+                </p>
+              }
+            </div>
+          </div>
+        </header>
+        <!-- Article Content -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-6 sm:px-10 lg:px-12 py-8 sm:py-12">
+              <!-- Content -->
+              <div class="prose prose-lg prose-blue max-w-none"
+                [innerHTML]="getContentHtml()">
+              </div>
+              <!-- Article Footer -->
+              <footer class="mt-12 pt-8 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                  <div class="text-sm text-gray-500">
+                    Last updated: {{ formatDate(post.updatedAt) }}
+                  </div>
+                  <!-- Share Buttons -->
+                  <div class="flex items-center space-x-3">
+                    <span class="text-sm text-gray-500 mr-3">Share:</span>
+                    <button
+                      (click)="shareOnTwitter()"
+                      class="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Share on Twitter">
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                      </svg>
+                    </button>
+                    <button
+                      (click)="shareOnLinkedIn()"
+                      class="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Share on LinkedIn">
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                      </svg>
+                    </button>
+                    <button
+                      (click)="copyUrl()"
+                      class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Copy URL">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </footer>
+            </div>
+          </div>
+          <!-- Navigation -->
+          <nav class="mt-12 flex justify-between">
+            <a routerLink="/"
+              class="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-medium rounded-lg shadow-md hover:shadow-lg hover:bg-gray-50 transition-all">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+              </svg>
+              Back to Posts
+            </a>
+            <button
+              (click)="scrollToTop()"
+              class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg hover:bg-blue-700 transition-all">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+              </svg>
+              Back to Top
+            </button>
+          </nav>
+        </div>
+      </article>
+    }
+    
     <!-- Toast Notification for URL Copy -->
-    <div *ngIf="showCopyToast"
-         class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up">
-      <div class="flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-        </svg>
-        URL copied to clipboard!
+    @if (showCopyToast) {
+      <div
+        class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          URL copied to clipboard!
+        </div>
       </div>
-    </div>
-  `,
+    }
+    `,
   styles: [`
     .prose {
       color: #374151;
