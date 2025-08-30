@@ -14,6 +14,7 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  cors:[ 'http://localhost:4200'],
   admin: {
     user: Users.slug,
     importMap: {
