@@ -165,7 +165,7 @@ export class PostListComponent implements OnInit {
   isLoading = false;
   error: string | null = null;
 
-  constructor(private blogService: BlogService) {}
+  constructor(private readonly blogService: BlogService) {}
 
   ngOnInit(): void {
     this.loadPosts();
