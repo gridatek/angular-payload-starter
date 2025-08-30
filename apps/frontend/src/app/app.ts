@@ -7,9 +7,9 @@ import {HeaderComponent} from './components/header/header.component';
   imports: [RouterOutlet, HeaderComponent],
   template: `
     <div class="min-h-screen bg-gray-50">
-      <app-header></app-header>
+      <app-header />
       <main>
-        <router-outlet></router-outlet>
+        <router-outlet />
       </main>
       <footer class="bg-gray-900 text-white py-12 mt-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
