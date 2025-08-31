@@ -25,7 +25,13 @@ export class BlogService {
     });
   }
 
-  createPostResource(slug: string) {
+  createPostResource(slug: string | undefined) {
+
+    if (!slug) {
+      return undefined;
+    }
+
+
     const params = new HttpParams().set('where[slug][equals]', slug).set('limit', '1');
 
     return httpResource<PayloadResponse<Post>>(() => {

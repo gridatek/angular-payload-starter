@@ -1,16 +1,17 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, computed } from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { filter, map, Subject, takeUntil } from 'rxjs';
 import { BlogService } from '../../services/blog.service';
 import { Post } from 'types';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-post-detail',
   imports: [RouterModule],
   template: `
     <!-- Loading State -->
-    @if (isLoading) {
+    @if (isLoading()) {
       <div class="min-h-screen flex items-center justify-center">
         <div class="text-center">
           <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -20,14 +21,14 @@ import { Post } from 'types';
     }
     
     <!-- Error State -->
-    @if (error) {
+    @if (error()) {
       <div class="min-h-screen flex items-center justify-center">
         <div class="text-center max-w-md mx-auto px-4">
           <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <h2 class="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h2>
-          <p class="text-gray-600 mb-6">{{ error }}</p>
+          <p class="text-gray-600 mb-6">{{ error() }}</p>
           <a routerLink="/" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -39,7 +40,7 @@ import { Post } from 'types';
     }
     
     <!-- Post Content -->
-    @if (post && !isLoading && !error) {
+    @if (post() && !isLoading() && !error()) {
       <article class="min-h-screen">
         <!-- Hero Section -->
         <header class="bg-linear-to-r from-gray-900 via-blue-900 to-gray-900 text-white py-16 lg:py-24">
@@ -52,36 +53,36 @@ import { Post } from 'types';
                     <a routerLink="/" class="text-gray-300 hover:text-white transition-colors">Home</a>
                   </li>
                   <li class="text-gray-500">/</li>
-                  <li class="text-gray-100">{{ post.title }}</li>
+                  <li class="text-gray-100">{{ post()?.title }}</li>
                 </ol>
               </nav>
               <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6">
-                {{ post.title }}
+                {{ post()?.title }}
               </h1>
               <div class="flex items-center justify-center space-x-6 text-gray-300 mb-8">
                 <div class="flex items-center">
                   <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM6 7a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zM6 11a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z"></path>
                   </svg>
-                  <time>{{ formatDate(post.publishedDate || post.createdAt) }}</time>
+                  <time>{{ formatDate(post()?.publishedDate || post()?.createdAt!) }}</time>
                 </div>
-                @if (readingTime) {
+                @if (readingTime()) {
                   <div class="flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>{{ readingTime }} min read</span>
+                    <span>{{ readingTime() }} min read</span>
                   </div>
                 }
                 <div class="flex items-center">
                   <span class="px-3 py-1 bg-blue-600 bg-opacity-20 text-blue-200 text-sm font-medium rounded-full">
-                    {{ post.status === 'published' ? 'Published' : 'Draft' }}
+                    {{ post()?.status === 'published' ? 'Published' : 'Draft' }}
                   </span>
                 </div>
               </div>
-              @if (post.excerpt) {
+              @if (post()?.excerpt) {
                 <p class="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                  {{ post.excerpt }}
+                  {{ post()?.excerpt }}
                 </p>
               }
             </div>
@@ -99,7 +100,7 @@ import { Post } from 'types';
               <footer class="mt-12 pt-8 border-t border-gray-200">
                 <div class="flex items-center justify-between">
                   <div class="text-sm text-gray-500">
-                    Last updated: {{ formatDate(post.updatedAt) }}
+                    Last updated: {{ formatDate(post()?.updatedAt!) }}
                   </div>
                   <!-- Share Buttons -->
                   <div class="flex items-center space-x-3">
@@ -281,65 +282,94 @@ import { Post } from 'types';
     }
   `]
 })
-export class PostDetailComponent implements OnInit, OnDestroy {
+export class PostDetailComponent {
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private blogService = inject(BlogService);
+  private readonly blogService = inject(BlogService);
 
-  post: Post | null = null;
-  isLoading = false;
-  error: string | null = null;
-  readingTime: number | null = null;
-  showCopyToast = false;
-  private destroy$ = new Subject<void>();
+  // Create a signal for the slug
+  slug = toSignal(
+    this.route.paramMap.pipe(
+      map(params => params.get('slug')),
+      filter(slug => slug !== null)
+    )
+  );
 
-  ngOnInit(): void {
-    this.route.paramMap
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(params => {
-        const slug = params.get('slug');
-        if (slug) {
-          this.loadPost(slug);
-        }
-      });
-  }
+  private readonly postResource = this.blogService.createPostResource(this.slug());
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  post = computed(() => this.postResource?.value()?.docs[0]);
+  isLoading = computed(() => this.postResource?.isLoading());
+  error = computed(() => this.postResource?.error());
+  readingTime = computed(() => {
 
-  private loadPost(slug: string): void {
-    this.isLoading = true;
-    this.error = null;
 
-    this.blogService.getPost(slug).subscribe({
-      next: (response) => {
-        if (response.docs && response.docs.length > 0) {
-          this.post = response.docs[0];
-          this.calculateReadingTime();
-        } else {
-          this.error = 'The requested post could not be found.';
-        }
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.error = 'Failed to load the post. Please try again.';
-        this.isLoading = false;
-        console.error('Error loading post:', error);
-      }
-    });
-  }
 
-  private calculateReadingTime(): void {
-    if (!this.post?.content) return;
+
+    if (!this.post()?.content) return;
 
     // Estimate reading time based on content
-    const contentText = this.extractTextFromContent(this.post.content);
+    const contentText = this.extractTextFromContent(this.post()?.content);
     const wordsPerMinute = 200;
     const wordCount = contentText.split(/\s+/).length;
-    this.readingTime = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
-  }
+    return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+
+
+
+
+
+
+
+  });
+
+  showCopyToast = false;
+  // private destroy$ = new Subject<void>();
+
+  // ngOnInit(): void {
+  //   this.route.paramMap
+  //     .pipe(takeUntil(this.destroy$))
+  //     .subscribe(params => {
+  //       const slug = params.get('slug');
+  //       if (slug) {
+  //         this.loadPost(slug);
+  //       }
+  //     });
+  // }
+
+  // ngOnDestroy(): void {
+  //   this.destroy$.next();
+  //   this.destroy$.complete();
+  // }
+
+  // private loadPost(slug: string): void {
+  //   this.isLoading = true;
+  //   this.error = null;
+
+  //   this.blogService.getPost(slug).subscribe({
+  //     next: (response) => {
+  //       if (response.docs && response.docs.length > 0) {
+  //         this.post = response.docs[0];
+  //         this.calculateReadingTime();
+  //       } else {
+  //         this.error = 'The requested post could not be found.';
+  //       }
+  //       this.isLoading = false;
+  //     },
+  //     error: (error) => {
+  //       this.error = 'Failed to load the post. Please try again.';
+  //       this.isLoading = false;
+  //       console.error('Error loading post:', error);
+  //     }
+  //   });
+  // }
+
+  // private calculateReadingTime(): void {
+  //   if (!this.post?.content) return;
+
+  //   // Estimate reading time based on content
+  //   const contentText = this.extractTextFromContent(this.post.content);
+  //   const wordsPerMinute = 200;
+  //   const wordCount = contentText.split(/\s+/).length;
+  //   this.readingTime = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+  // }
 
   private extractTextFromContent(content: any): string {
     if (typeof content === 'string') {
@@ -364,12 +394,12 @@ export class PostDetailComponent implements OnInit, OnDestroy {
   }
 
   getContentHtml(): string {
-    if (!this.post?.content) {
+    if (!this.post()?.content) {
       return '<p class="text-gray-500 italic">No content available.</p>';
     }
 
-    if (typeof this.post.content === 'string') {
-      return this.post.content;
+    if (typeof this.post()?.content === 'string') {
+      return this.post()?.content?? '';
     }
 
     // Handle Lexical editor format
@@ -442,7 +472,7 @@ export class PostDetailComponent implements OnInit, OnDestroy {
     if (!this.post) return;
 
     const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent(`Check out this article: ${this.post.title}`);
+    const text = encodeURIComponent(`Check out this article: ${this.post()?.title}`);
     const twitterUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
 
     window.open(twitterUrl, '_blank', 'width=600,height=400');
